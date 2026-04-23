@@ -18,7 +18,7 @@ response = model.generate_content(f"Analisis log berikut, apakah ada tanda seran
 # 3. Kirim ke WhatsApp via Fonnte
 url = "https://api.fonnte.com/send"
 data = {
-    'target': '085143733866',
+    'target': '6285143733866',
     'message': response.text
 }
 headers = {'Authorization': FONNTE_TOKEN}
