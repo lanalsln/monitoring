@@ -1,25 +1,44 @@
 import google.generativeai as genai
+import datetime
 import requests
 import subprocess
 
-# Masukkan API Key kamu di sini
-GEMINI_KEY = "AIzaSyBMwv8aB9UDJfixhq8z7mNgiZk--gq3eKY"
-FONNTE_TOKEN = "SwdrcBh3z2HCs1EUczy9"
+# === Konfigurasi API Gemini ===
+genai.configure(api_key="AIzaSyBMwv8aB9UDJfixhq8z7mNgiZk--gq3eKY")
+model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
-# 1. Mengambil log SSH (Failed password)
-# Gunakan command shell: tail -n 10 /var/log/auth.log | grep "Failed password"
-logs = subprocess.check_output('tail -n 10 /var/log/auth.log', shell=True).decode('utf-8')
+def get_ssh_attempts():
+    result = subprocess.check_output(
+        "grep 'Failed password' /var/log/auth.log | tail -n 10",
+        shell=True
+    )
+    return result.decode()
 
-# 2. Analisis dengan Gemini
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash')
-response = model.generate_content(f"Analisis log berikut, apakah ada tanda serangan brute force? : {logs}")
+def get_gemini_analysis(log_text):
+    try:
+        response = model.generate_content(
+            f"Ada percobaan login brute force:\n{log_text}\n"
+            f"Apa yang sebaiknya saya lakukan? responnya jangan terlalu panjang"
+        )
+        return response.text
+    except Exception as e:
+        return f"⚠️ Gagal mendapatkan analisis dari Gemini: {e}"
 
-# 3. Kirim ke WhatsApp via Fonnte
-url = "https://api.fonnte.com/send"
-data = {
-    'target': '6285143733866',
-    'message': response.text
-}
-headers = {'Authorization': FONNTE_TOKEN}
-requests.post(url, data=data, headers=headers)
+def send_whatsapp(message):
+    token = "SwdrcBh3z2HCs1EUczy9"
+    payload = {
+        "target": "6285143733866",  # contoh: 6281234567890
+        "message": message,
+    }
+    headers = {"Authorization": token}
+    r = requests.post("https://api.fonnte.com/send", data=payload, headers=headers)
+    return r.status_code
+
+# === Eksekusi utama ===
+log = get_ssh_attempts()
+ai_response = get_gemini_analysis(log)
+full_message = (
+    f"[{datetime.datetime.now()}] ⚠️ Percobaan Login Detected!\n\n"
+    f"{log}\n\n🤖 Gemini says:\n{ai_response}"
+)
+send_whatsapp(full_message)
