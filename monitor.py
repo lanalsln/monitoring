@@ -25,9 +25,9 @@ def get_gemini_analysis(log_text):
         return f"Gagal mendapatkan analisis dari Gemini: {e}"
 
 def send_whatsapp(message):
-    token = "SwdrcBh3z2HCs1EUczy9"
+    token = "WuC5P93JPzr2ohQas2kb"
     payload = {
-        "target": "6285143733866",
+        "target": "6285179701846",
         "message": message,
     }
     headers = {"Authorization": token}
